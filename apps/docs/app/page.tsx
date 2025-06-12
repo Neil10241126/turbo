@@ -5,6 +5,7 @@ import styles from "./page.module.css";
 type Props = Omit<ImageProps, "src"> & {
   srcLight: string;
   srcDark: string;
+  
 };
 
 const ThemeImage = (props: Props) => {
@@ -13,7 +14,7 @@ const ThemeImage = (props: Props) => {
   return (
     <>
       <Image {...rest} src={srcLight} className="imgLight" />
-      
+
       <Image {...rest} src={srcDark} className="imgDark" />
     </>
   );
