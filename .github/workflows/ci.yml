@@ -1,0 +1,201 @@
+name: Run Lint and Build
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+      - feat/**
+  pull_request:
+    branches:
+      - dev
+
+jobs:
+  detect-changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      docs: ${{ steps.docs-changes.outputs.any_changed }}
+      web: ${{ steps.web-changes.outputs.any_changed }}
+      ui: ${{ steps.ui-changes.outputs.any_changed }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check UI changes
+        id: ui-changes
+        uses: tj-actions/changed-files@v46
+        with:
+            files: packages/ui/**
+
+      - name: Check Docs changes
+        id: docs-changes
+        uses: tj-actions/changed-files@v46
+        with:
+          files: apps/docs/**
+
+      - name: Check Web changes
+        id: web-changes
+        uses: tj-actions/changed-files@v46
+        with:
+          files: apps/web/**
+
+      - name: Debug changed files output
+        run: |
+          echo "Docs changes detected: ${{ steps.docs-changes.outputs.any_changed }}"
+          echo "Docs changed files: ${{ steps.docs-changes.outputs.all_changed_files }}"
+          echo "Web changes detected: ${{ steps.web-changes.outputs.any_changed }}"
+          echo "Web changed files: ${{ steps.web-changes.outputs.all_changed_files }}"
+          echo "UI changes detected: ${{ steps.ui-changes.outputs.any_changed }}"
+          echo "UI changed files: ${{ steps.ui-changes.outputs.all_changed_files }}"
+
+  lint-ui:
+    name: Lint UI
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.ui == 'true' }}
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.0.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Lint
+        run: pnpm run lint:@repo/ui
+
+
+  lint-docs:
+    name: Lint Docs
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.docs == 'true' }}
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.0.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Lint
+        run: pnpm run lint:docs
+
+
+  build-docs:
+    name: Build Docs
+    needs: [detect-changes, lint-docs]
+    if: ${{ needs.detect-changes.outputs.docs == 'true' }}
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Setup pnpm 9.0.0
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.0.0
+
+      - name: Setup Node.js 20 environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build
+        run: pnpm run build:docs
+
+
+  lint-web:
+    name: Lint Web
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.web == 'true' }}
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.0.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Lint
+        run: pnpm run lint:web
+
+
+  build-web:
+    name: Build Web
+    needs: [detect-changes, lint-web]
+    if: ${{ needs.detect-changes.outputs.web == 'true' }}
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Setup pnpm 9.0.0
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.0.0
+
+      - name: Setup Node.js 20 environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build
+        run: pnpm run build:web
