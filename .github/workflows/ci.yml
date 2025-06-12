@@ -228,5 +228,5 @@ jobs:
         run: pnpm install
 
       - name: Run Turbo Lint
-        run: turbo run lint
+        run: pnpm run lint
 
