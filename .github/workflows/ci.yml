@@ -78,7 +78,7 @@ jobs:
         run: pnpm install
 
       - name: Lint
-        run: pnpm run lint:@repo/ui
+        run: pnpm run lint:ui
 
 
   lint-docs:
@@ -199,3 +199,34 @@ jobs:
 
       - name: Build
         run: pnpm run build:web
+
+
+  lint-all:
+    name: Lint All
+    needs: [detect-changes, build-web, build-docs, lint-ui]
+    if: ${{ always() && (needs.build-web.result == 'success' || needs.build-docs.result == 'success' || needs.lint-ui.result == 'success') }}
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Setup pnpm 9.0.0
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.0.0
+
+      - name: Setup Node.js 20 environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Run Turbo Lint
+        run: turbo run lint
+
